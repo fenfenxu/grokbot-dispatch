@@ -117,7 +117,14 @@ if [ -z "$AGENT" ]; then
   else AGENT="unknown"; fi
 fi
 export TASK TARGET CTX_RAW GIT_REMOTE GIT_BRANCH GIT_SHA AGENT BODY_FILE
-export MODEL="${GROKBOT_SENDER_MODEL:-}"
+MODEL="${GROKBOT_SENDER_MODEL:-}"
+if [ -z "$MODEL" ]; then   # best-effort model detection
+  case "$AGENT" in
+    codex-cli) MODEL="$(sed -n 's/^model[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' "${CODEX_HOME:-$HOME/.codex}/config.toml" 2>/dev/null | head -n1 || true)" ;;
+    claude-code) MODEL="${ANTHROPIC_MODEL:-}" ;;
+  esac
+fi
+export MODEL
 OS_INFO="$(uname -srm 2>/dev/null || true)"
 HOST_NAME="$(hostname 2>/dev/null || uname -n)"
 USER_NAME="${USER:-$(id -un 2>/dev/null || true)}"

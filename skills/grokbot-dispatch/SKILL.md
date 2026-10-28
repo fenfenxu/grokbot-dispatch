@@ -25,7 +25,13 @@ Only when the user explicitly asks to send/dispatch a task to a Grok Bot, or nam
    - repo, branch and commit are added automatically, so do not repeat them
    - NEVER include secrets: `.env` contents, tokens, keys, passwords, private URLs with credentials. `send.sh` redacts common patterns as a last resort, but do not rely on it.
 
-   Write it to a temp file (plain text or JSON), for example `ctx=$(mktemp)`, or pipe it with `--context-file -`.
+   Pass it by piping a heredoc into `--context-file -` (no temp file to clean up, and no `rm` for sandboxes to reject):
+   ```bash
+   $S/send.sh --task "..." --context-file - <<'CTX'
+   ...context text or JSON...
+   CTX
+   ```
+   If you know which model you are, also `export GROKBOT_SENDER_MODEL=<model>` first (the script only guesses it for Codex/Claude Code).
 
 3. **Resolve the target**:
    - `@name` that matches a configured bot -> `--bot name`
@@ -35,7 +41,7 @@ Only when the user explicitly asks to send/dispatch a task to a Grok Bot, or nam
 
 4. **Send**. Optionally run with `--dry-run` first when the user wants to see the payload.
    ```bash
-   $S/send.sh [--bot NAME] [--to TARGET] --task "<what to do, self-contained>" --context-file "$ctx"
+   $S/send.sh [--bot NAME] [--to TARGET] --task "<what to do, self-contained>" --context-file - <<'CTX' ... CTX
    ```
    The task text must stand on its own: say the goal, the expected output, and where to report. One try, no retry.
 
