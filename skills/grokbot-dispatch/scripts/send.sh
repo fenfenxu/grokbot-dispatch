@@ -206,6 +206,11 @@ HTTP_CODE="$(
 )"
 CURL_RC=$?
 set -e
+if [ -n "${GROKBOT_DISPATCH_SENT_LOG:-}" ]; then
+  # optional audit log: the exact body that was sent (never the key) + result
+  { python3 -c 'import json,sys; print(json.dumps({"http": sys.argv[1], "curl_rc": int(sys.argv[2]), "bot": sys.argv[3], "body": json.load(open(sys.argv[4]))}, ensure_ascii=False))' \
+      "${HTTP_CODE:-}" "$CURL_RC" "$BOT_NAME" "$BODY_FILE" >>"$GROKBOT_DISPATCH_SENT_LOG"; } 2>/dev/null || true
+fi
 if [ "$CURL_RC" -ne 0 ]; then
   echo "FAILED: curl exit $CURL_RC ($(head -c 200 "$RESP_FILE.err" 2>/dev/null | sed "s#$URL#<url>#g")). Not retried." >&2
   rm -f "$RESP_FILE.err"; exit 1
